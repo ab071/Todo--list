@@ -1,11 +1,9 @@
 
-## Screenshots
-![App Showcase](/images/screenshots.png "App Showcase")
+
 
 
 ## Project Details
-Created using <strong>VueJS 3</strong> and <strong>TailwindCSS</strong>.
-
+todo list project
 
 ## Setting up the Project
 
