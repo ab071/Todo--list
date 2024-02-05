@@ -5,7 +5,6 @@
       <div>
         <div class="mt-10">
           <h1 class="text-5xl font-semibold text-blue-900">Liste de tâches</h1>
-
           <div class="mt-6">
             <form @submit.prevent="addTodo()">
               <div class="grid grid-cols-1 gap-4">
@@ -42,7 +41,6 @@
               </div>
             </form>
           </div>
-
           <div class="mt-8">
             <div id="todoList">
               <transition-group name="fade" tag="div" class="grid grid-cols-1 gap-3">
@@ -56,8 +54,11 @@
                 >
                   <div :class="{ 'completed': todo.complete }" class="mb-2">{{ todo.text }}</div>
                   <div class="flex justify-between">
-                    <button v-if="editingTodoIndex !== index" class="text-red-400 hover:text-red-600 font-semibold" @click="removeTodo(index)">Delete</button>
-                    <button v-if="editingTodoIndex !== index" class="text-blue-400 hover:text-blue-600 font-semibold" @click="editTodo(index)">Edit</button>
+                    <button class="text-red-400 hover:text-red-600 font-semibold" @click="removeTodo(index)">Delete</button>
+                    <button class="text-blue-400 hover:text-blue-600 font-semibold" @click="editTodo(index)">Edit</button>
+                    <button class="text-green-400 hover:text-green-600 font-semibold" @click="toggleComplete(index)">
+                      {{ todo.complete ? 'Unmark' : 'Complete' }}
+                    </button>
                   </div>
                   <div v-show="editingTodoIndex === index" class="mt-4 flex flex-col">
                     <input
@@ -81,7 +82,6 @@
   </div>
 </template>
 
-
 <script setup>
 import { ref } from "vue";
 
@@ -92,11 +92,11 @@ const editTodoText = ref("");
 let storedTodos;
 localStorage.getItem("todos") ? (storedTodos = JSON.parse(localStorage.getItem("todos"))) : (storedTodos = []);
 
-const todos = ref(storedTodos.map((todo, index) => ({ ...todo, id: index })));
+const todos = ref(storedTodos.map((todo, index) => ({ ...todo, id: index, complete: todo.complete ?? false })));
 
 function addTodo() {
   if (newTodo.value !== "") {
-    todos.value.push({ complete: false, text: newTodo.value });
+    todos.value.push({ text: newTodo.value, complete: false });
     newTodo.value = "";
     updateStorage();
   }
@@ -127,6 +127,11 @@ function updateTodo(index) {
   updateStorage();
 }
 
+function toggleComplete(index) {
+  todos.value[index].complete = !todos.value[index].complete;
+  updateStorage();
+}
+
 function updateStorage() {
   localStorage.setItem("todos", JSON.stringify(todos.value));
 }
@@ -135,5 +140,6 @@ function updateStorage() {
 <style scoped>
 .completed {
   text-decoration: line-through;
+  color: #a0aec0; 
 }
 </style>
