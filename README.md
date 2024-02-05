@@ -1,6 +1,5 @@
-
-
-
+## Screenshots
+![App Showcase](/images/screenshots.png "App Showcase")
 
 ## Project Details
 todo list project
