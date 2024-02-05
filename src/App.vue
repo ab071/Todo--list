@@ -6,7 +6,7 @@
         <div class="mt-10">
           <h1 class="text-5xl font-semibold text-blue-900">Liste de tâches</h1>
           <div class="mt-6">
-            <form @submit.prevent="addTodo()">
+            <form @submit.prevent="addTodo">
               <div class="grid grid-cols-1 gap-4">
                 <div>
                   <input
@@ -22,7 +22,6 @@
                       <button
                         type="button"
                         class="text-white py-2 px-4 shadow-md w-full rounded bg-red-400 hover:bg-red-600 font-semibold"
-                        v-if="todos.length"
                         @click="removeAllTodos"
                       >
                         Supprimer tout
@@ -41,35 +40,39 @@
               </div>
             </form>
           </div>
+          <div class="filter-options mt-4 text-center">
+            <button class="filter-btn mr-2" @click="setFilter('all')">Toutes</button>
+            <button class="filter-btn mr-2" @click="setFilter('completed')">Complétées</button>
+            <button class="filter-btn" @click="setFilter('active')">Actives</button>
+          </div>
           <div class="mt-8">
             <div id="todoList">
               <transition-group name="fade" tag="div" class="grid grid-cols-1 gap-3">
-                <div v-if="todos.length === 0" key="empty">
-                  <p class="text-gray-400">La liste est vide !</p>
+                <div v-if="filteredTodos.length === 0" key="empty">
+                  <p class="text-gray-400">Aucune tâche ici !</p>
                 </div>
                 <div
-                  v-for="(todo, index) in todos"
+                  v-for="(todo, index) in filteredTodos"
                   :key="todo.id"
                   class="bg-white rounded shadow-md p-3 flex flex-col"
                 >
-                  <div :class="{ 'completed': todo.complete }" class="mb-2">{{ todo.text }}</div>
+                  <div :class="{ 'completed': todo.complete }" class="mb-2">
+                    <input
+                      v-if="todo.editing"
+                      v-model="todo.text"
+                      @keyup.enter="finishEdit(todo)"
+                      @blur="finishEdit(todo)"
+                      class="text-md outline-none w-full"
+                    />
+                    <span v-else>{{ todo.text }}</span>
+                  </div>
                   <div class="flex justify-between">
                     <button class="text-red-400 hover:text-red-600 font-semibold" @click="removeTodo(index)">Delete</button>
-                    <button class="text-blue-400 hover:text-blue-600 font-semibold" @click="editTodo(index)">Edit</button>
+                    <button v-if="!todo.editing" class="text-blue-400 hover:text-blue-600 font-semibold" @click="startEdit(todo)">Edit</button>
+                    <button v-else class="text-green-400 hover:text-green-600 font-semibold" @click="finishEdit(todo)">Done</button>
                     <button class="text-green-400 hover:text-green-600 font-semibold" @click="toggleComplete(index)">
-                      {{ todo.complete ? 'Unmark' : 'Complete' }}
+                      {{ todo.complete ? 'Marquer non complétée' : 'Marquer complétée' }}
                     </button>
-                  </div>
-                  <div v-show="editingTodoIndex === index" class="mt-4 flex flex-col">
-                    <input
-                      type="text"
-                      class="border-2 outline-none py-2 px-2 shadow-md font-medium w-full rounded border-blue-300 hover:border-blue-600 focus:border-blue-600 focus:shadow-blue-200 mb-1"
-                      v-model="editTodoText"
-                    />
-                    <div class="flex justify-between">
-                      <button class="text-green-400 hover:text-green-600 font-semibold" @click="updateTodo(index)">Save</button>
-                      <button class="text-red-400 hover:text-red-600 font-semibold" @click="cancelEdit">Cancel</button>
-                    </div>
                   </div>
                 </div>
               </transition-group>
@@ -83,27 +86,22 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, computed } from "vue";
 
 const newTodo = ref("");
-const editingTodoIndex = ref(-1);
-const editTodoText = ref("");
-
-let storedTodos;
-localStorage.getItem("todos") ? (storedTodos = JSON.parse(localStorage.getItem("todos"))) : (storedTodos = []);
-
-const todos = ref(storedTodos.map((todo, index) => ({ ...todo, id: index, complete: todo.complete ?? false })));
+const todos = ref(JSON.parse(localStorage.getItem("todos")) || []);
+const filter = ref('all');
 
 function addTodo() {
-  if (newTodo.value !== "") {
-    todos.value.push({ text: newTodo.value, complete: false });
+  if (newTodo.value.trim() !== "") {
+    todos.value.push({ id: Date.now(), text: newTodo.value, complete: false, editing: false });
     newTodo.value = "";
     updateStorage();
   }
 }
 
 function removeAllTodos() {
-  todos.value.splice(0, todos.value.length);
+  todos.value = [];
   updateStorage();
 }
 
@@ -112,25 +110,37 @@ function removeTodo(index) {
   updateStorage();
 }
 
-function editTodo(index) {
-  editingTodoIndex.value = index;
-  editTodoText.value = todos.value[index].text;
-}
-
-function cancelEdit() {
-  editingTodoIndex.value = -1;
-}
-
-function updateTodo(index) {
-  todos.value[index].text = editTodoText.value;
-  editingTodoIndex.value = -1;
-  updateStorage();
-}
-
 function toggleComplete(index) {
   todos.value[index].complete = !todos.value[index].complete;
   updateStorage();
 }
+
+function startEdit(todo) {
+  todo.editing = true;
+}
+
+function finishEdit(todo) {
+  if (!todo.text.trim()) {
+    todos.value.splice(todos.value.indexOf(todo), 1);
+  } else {
+    todo.editing = false;
+  }
+  updateStorage();
+}
+
+function setFilter(f) {
+  filter.value = f;
+}
+
+const filteredTodos = computed(() => {
+  return todos.value.filter(todo => {
+    switch (filter.value) {
+      case 'completed': return todo.complete;
+      case 'active': return !todo.complete;
+      default: return true;
+    }
+  });
+});
 
 function updateStorage() {
   localStorage.setItem("todos", JSON.stringify(todos.value));
@@ -140,6 +150,17 @@ function updateStorage() {
 <style scoped>
 .completed {
   text-decoration: line-through;
-  color: #a0aec0; 
+  color: #a0aec0;
+}
+.filter-btn {
+  background-color: #f7fafc;
+  border: 1px solid #cbd5e0;
+  color: #4a5568;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.filter-btn:hover {
+  background-color: #edf2f7;
 }
 </style>
