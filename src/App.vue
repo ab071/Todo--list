@@ -67,9 +67,9 @@
                     <span v-else>{{ todo.text }}</span>
                   </div>
                   <div class="flex justify-between">
-                    <button class="text-red-400 hover:text-red-600 font-semibold" @click="removeTodo(index)">Delete</button>
-                    <button v-if="!todo.editing" class="text-blue-400 hover:text-blue-600 font-semibold" @click="startEdit(todo)">Edit</button>
-                    <button v-else class="text-green-400 hover:text-green-600 font-semibold" @click="finishEdit(todo)">Done</button>
+                    <button class="text-red-400 hover:text-red-600 font-semibold" @click="removeTodo(index)">Supprimer</button>
+                    <button v-if="!todo.editing" class="text-blue-400 hover:text-blue-600 font-semibold" @click="startEdit(todo)">Modifier</button>
+                    <button v-else class="text-green-400 hover:text-green-600 font-semibold" @click="finishEdit(todo)">Terminer</button>
                     <button class="text-green-400 hover:text-green-600 font-semibold" @click="toggleComplete(index)">
                       {{ todo.complete ? 'Marquer non complétée' : 'Marquer complétée' }}
                     </button>
